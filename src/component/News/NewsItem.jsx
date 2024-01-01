@@ -18,7 +18,7 @@ export default class NewsItem extends Component {
       const { element } = this.props;
 
     return (
-      <Card sx={{ maxWidth: 345}} className="my-3">
+      <Card sx={{ maxWidth: '100vw'}} className="my-3">
         <CardHeader
                 title={<Typography>
                     {element.title ? element.title.slice(0, 30) : "Top-News-Today"}

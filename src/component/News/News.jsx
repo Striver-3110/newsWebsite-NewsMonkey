@@ -1,6 +1,10 @@
 import React, { Component } from "react";
 import NewsItem from "./NewsItem.jsx";
+import Spinner from "../Spinner/Spinner.jsx";
+import PropTypes from "prop-types";
+
 // import { dialogClasses } from "@mui/material";
+// import { Audio } from "react-loader-spinner";
 
 export default class News extends Component {
   articles = [
@@ -170,46 +174,62 @@ export default class News extends Component {
         "Sign up for daily news updates from CleanTechnica on email. Or follow us on Google News!\r\nI’ll be honest, there are a few surprising and confusing parts of this story. First of all, let’s note that t… [+5166 chars]",
     },
   ];
+  static defaultProps = {
+    pageSize: 6,
+    country: "in",
+    category: "general",
+  };
+  static propTypes = {
+    pageSize: PropTypes.number,
+    country: PropTypes.string,
+    category: PropTypes.string,
+  };
   constructor() {
     super();
     this.state = {
       articles: [],
       loader: false,
       page: 1,
+      pageSize: 6,
     };
   }
   async componentDidMount() {
     try {
-      let url =
-        "https://newsapi.org/v2/everything?q=tesla&from=2023-11-29&sortBy=publishedAt&apiKey=c4faef5cfb0d4828bc83dfdb86a43e1e&pageSize=21&page=1";
+      let url = `https://newsapi.org/v2/top-headlines?&from=2023-12-30&to=2023-12-30&sortBy=popularity&category=${this.props.category}&country=${this.props.country}&apiKey=1d7394a14ee64b14acb07b2e7483c94c&pageSize=${this.state.pageSize}&page=${this.state.page}`;
+      this.setState({ loader: true });
       let data = await fetch(url);
       let jsonData = await data.json();
+
       if (jsonData.status === "ok") {
         this.setState({
           articles: jsonData.articles,
           totalResults: jsonData.totalResults,
+          loader: false,
         });
       } else {
-        return <div>Error: 404 , Page not found!</div>;
+        console.error("News API error:", jsonData.message);
       }
     } catch (error) {
-      console.log("something went wrong: " + error);
+      console.error("Error fetching news:", error.message);
     }
-
   }
+
   goToNextPage = async () => {
     if (!(this.state.page + 1 > Math.ceil(this.state.totalResults) / 21)) {
       try {
-        let url = `https://newsapi.org/v2/everything?q=tesla&from=2023-11-29&sortBy=publishedAt&apiKey=c4faef5cfb0d4828bc83dfdb86a43e1e&pageSize=21&page=${
-          this.state.page + 1
-        }`;
+        let url = `https://newsapi.org/v2/top-headlines?&from=2023-12-30&to=2023-12-30&sortBy=popularity&category=${this.props.category}&country=${this.props.country}&apiKey=1d7394a14ee64b14acb07b2e7483c94c&pageSize=${this.state.pageSize}&page=${this.state.page}`;
+
+        this.setState({ loader: true });
+
         let data = await fetch(url);
         let jsonData = await data.json();
+
         if (jsonData.status === "ok") {
           this.setState({
             articles: jsonData.articles,
             page: this.state.page + 1,
           });
+          this.setState({ loader: false });
         } else {
           return <div>Error: 404 , Page not found!</div>;
         }
@@ -219,11 +239,10 @@ export default class News extends Component {
     }
   };
   goToPrevPage = async () => {
-
     try {
-      let url = `https://newsapi.org/v2/everything?q=tesla&from=2023-11-29&sortBy=publishedAt&apiKey=c4faef5cfb0d4828bc83dfdb86a43e1e&page=${
-        this.state.page - 1
-      }&pageSize=21`;
+      let url = `https://newsapi.org/v2/top-headlines?&from=2023-12-30&to=2023-12-30&sortBy=popularity&category=${this.props.category}&country=${this.props.country}&apiKey=1d7394a14ee64b14acb07b2e7483c94c&pageSize=${this.state.pageSize}&page=${this.state.page}`;
+      this.setState({ loader: true });
+
       let data = await fetch(url);
       let jsonData = await data.json();
       if (jsonData.status === "ok") {
@@ -231,6 +250,7 @@ export default class News extends Component {
           articles: jsonData.articles,
           page: this.state.page - 1,
         });
+        this.setState({ loader: false });
       } else {
         return <div>Error: 404 , Page not found!</div>;
       }
@@ -238,22 +258,30 @@ export default class News extends Component {
       console.log("something went wrong: no prev page" + error);
     }
   };
+   capitalize = (msg) => {
+        const message = msg.toLowerCase();
+        return `${message.charAt(0).toUpperCase()}${message.slice(1)}`;
+    }
   render() {
     return (
       <div className="container my-4">
-        <h2 className="my-4">NewsMonkey-Top News</h2>
+        <h2 className="text-center" style={{ margin: "40px" }}>
+          {`NewsLion - ${this.capitalize(this.props.category)}`}
+        </h2>
+        {this.state.loader && <Spinner />}
         <div className="row h-100">
-          {this.state.articles.map((element) => {
-            return (
-              <div className="col-md-4" key={element.url}>
-                <NewsItem element={element} />
-              </div>
-            );
-          })}
+          {!this.state.loader &&
+            this.state.articles.map((element) => {
+              return (
+                <div className="col-md-4" key={element.url}>
+                  <NewsItem element={element} />
+                </div>
+              );
+            })}
         </div>
         <div className="container d-flex justify-content-between">
           <div
-            aria-disabled={this.state.page <= 1}
+            disabled={this.state.page <= 1}
             className="btn btn-dark"
             onClick={this.goToPrevPage}
           >
