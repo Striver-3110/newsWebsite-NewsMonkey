@@ -7,16 +7,12 @@ import CardActions from "@mui/material/CardActions";
 import IconButton from "@mui/material/IconButton";
 import Typography from "@mui/material/Typography";
 import ShareIcon from "@mui/icons-material/Share";
-import { Component } from "react";
 
 
 
-export default class NewsItem extends Component {
-
-  render() {
+const NewsItem = (props)=>{
     //   const  element  = this.props; this is not valid
-      const { element } = this.props;
-
+    const { element } = props;
     return (
       <Card
         sx={{
@@ -98,4 +94,5 @@ export default class NewsItem extends Component {
       </Card>
     );
   }
-}
+
+export default NewsItem;

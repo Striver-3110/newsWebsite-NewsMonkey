@@ -2,13 +2,9 @@ import "./App.css";
 import Navbar from "./component/Nav/Navbar.jsx";
 import News from "./component/News/News.jsx";
 import LoadingBar from "react-top-loading-bar";
+import Spinner from './component/Spinner/Spinner.jsx'
 import { Routes, BrowserRouter as Router, Route } from "react-router-dom";
 import React, { Component } from "react";
-
-
-
-
-
 
 export default class App extends Component {
   pageSize = 6;
@@ -22,8 +18,6 @@ export default class App extends Component {
     this.setState({ progress: progress });
   };
   render() {
-    // console.log(this.api);
-  console.log(this.api);
 
     return (
       <div>
