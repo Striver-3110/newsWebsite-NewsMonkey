@@ -1,7 +1,9 @@
 import React, { Component } from "react";
 import NewsItem from "./NewsItem.jsx";
-import Spinner from "../Spinner/Spinner.jsx";
+// import Spinner from "../Spinner/Spinner.jsx";
 import PropTypes from "prop-types";
+import InfiniteScroll from "react-infinite-scroll-component";
+
 
 // import { dialogClasses } from "@mui/material";
 // import { Audio } from "react-loader-spinner";
@@ -178,11 +180,14 @@ export default class News extends Component {
     pageSize: 6,
     country: "in",
     category: "general",
+    // api:"",
   };
   static propTypes = {
     pageSize: PropTypes.number,
     country: PropTypes.string,
     category: PropTypes.string,
+    setProgress: PropTypes.func,
+    api:PropTypes.string,
   };
   constructor() {
     super();
@@ -191,14 +196,23 @@ export default class News extends Component {
       loader: false,
       page: 1,
       pageSize: 6,
+      totalResults: 0,
+      count : 0
+
     };
   }
-  async componentDidMount() {
+
+
+  async updateNews() {
     try {
-      let url = `https://newsapi.org/v2/top-headlines?&from=2023-12-30&to=2023-12-30&sortBy=popularity&category=${this.props.category}&country=${this.props.country}&apiKey=1d7394a14ee64b14acb07b2e7483c94c&pageSize=${this.state.pageSize}&page=${this.state.page}`;
+      this.props.setProgress(0);
+      const url = `https://newsapi.org/v2/top-headlines?&from=2023-12-30&to=2023-12-30&sortBy=popularity&category=${this.props.category}&country=${this.props.country}&apiKey=${this.props.api}&pageSize=${this.state.pageSize}&page=${this.state.page}`;
       this.setState({ loader: true });
       let data = await fetch(url);
+      this.props.setProgress(20);
+
       let jsonData = await data.json();
+      this.props.setProgress(90);
 
       if (jsonData.status === "ok") {
         this.setState({
@@ -206,80 +220,146 @@ export default class News extends Component {
           totalResults: jsonData.totalResults,
           loader: false,
         });
+      this.props.setProgress(100);
+
       } else {
-        console.error("News API error:", jsonData.message);
+        // console.log("returned status: ", jsonData.status);
       }
     } catch (error) {
-      console.error("Error fetching news:", error.message);
+      console.log(error.message);
+      this.setState({ loader: false });
     }
   }
-
-  goToNextPage = async () => {
-    if (!(this.state.page + 1 > Math.ceil(this.state.totalResults) / 21)) {
-      try {
-        let url = `https://newsapi.org/v2/top-headlines?&from=2023-12-30&to=2023-12-30&sortBy=popularity&category=${this.props.category}&country=${this.props.country}&apiKey=1d7394a14ee64b14acb07b2e7483c94c&pageSize=${this.state.pageSize}&page=${this.state.page}`;
-
-        this.setState({ loader: true });
-
-        let data = await fetch(url);
-        let jsonData = await data.json();
-
-        if (jsonData.status === "ok") {
-          this.setState({
-            articles: jsonData.articles,
-            page: this.state.page + 1,
-          });
-          this.setState({ loader: false });
-        } else {
-          return <div>Error: 404 , Page not found!</div>;
-        }
-      } catch (error) {
-        console.log("something went wrong: " + error);
-      }
-    }
+  async componentDidMount() {
+    //** above code was same as updateNews() */
+    // *********************************** removed redundency from above code
+    this.updateNews();
+  }
+  //****************** here was the  goToNextPage function*/
+  capitalize = (msg) => {
+    const message = msg.toLowerCase();
+    return `${message.charAt(0).toUpperCase()}${message.slice(1)}`;
   };
-  goToPrevPage = async () => {
+  //****************** here was the  goToPrevPage function*/
+  // Before fetching new data
+  // scrollPosition = {
+  //   x: window.scrollX,
+  //   y: window.scrollY,
+  // };
+  fetchMoreData = async () => {
+    // a fake async api call like which sends
+    // 20 more records in 1.5 secs
+    this.setState({ page: this.state.page + 1 });
     try {
-      let url = `https://newsapi.org/v2/top-headlines?&from=2023-12-30&to=2023-12-30&sortBy=popularity&category=${this.props.category}&country=${this.props.country}&apiKey=1d7394a14ee64b14acb07b2e7483c94c&pageSize=${this.state.pageSize}&page=${this.state.page}`;
-      this.setState({ loader: true });
+      const url = `https://newsapi.org/v2/top-headlines?&from=2023-12-30&to=2023-12-30&sortBy=popularity&category=${this.props.category}&country=${this.props.country}&apiKey=${this.props.api}&pageSize=${this.state.pageSize}&page=${this.state.page}`;
+
+      //*************************this line was causing the malfunctioning like once the data is fetched it reaches to top once again
+      // this.setState({ loader: true }); 
+      //***************************************************************************************************************************** */
 
       let data = await fetch(url);
       let jsonData = await data.json();
       if (jsonData.status === "ok") {
         this.setState({
-          articles: jsonData.articles,
-          page: this.state.page - 1,
+          articles: this.state.articles.concat(jsonData.articles),
+          totalResults: jsonData.totalResults,
+          loader: false,
         });
-        this.setState({ loader: false });
+        // window.scrollTo(this.scrollPosition.x, this.scrollPosition.y);
       } else {
-        return <div>Error: 404 , Page not found!</div>;
+        // console.log("returned status: ", jsonData.status);
       }
     } catch (error) {
-      console.log("something went wrong: no prev page" + error);
+      console.log(error.message);
     }
   };
-   capitalize = (msg) => {
-        const message = msg.toLowerCase();
-        return `${message.charAt(0).toUpperCase()}${message.slice(1)}`;
-    }
   render() {
     return (
-      <div className="container my-4">
+      <>
         <h2 className="text-center" style={{ margin: "40px" }}>
-          {`NewsLion - ${this.capitalize(this.props.category)}`}
+          {`NewsLion - Top ${this.capitalize(this.props.category)} Headlines`}
         </h2>
-        {this.state.loader && <Spinner />}
-        <div className="row h-100">
-          {!this.state.loader &&
-            this.state.articles.map((element) => {
-              return (
-                <div className="col-md-4" key={element.url}>
-                  <NewsItem element={element} />
-                </div>
-              );
-            })}
-        </div>
-        <div className="container d-flex justify-content-between">
+        {/* {this.state.loader && <Spinner />} */}
+        <InfiniteScroll
+          dataLength={this.state.articles.length}
+          next={this.fetchMoreData}
+          hasMore={this.state.articles.length !== this.state.totalResults}
+          scrollToTop={false}
+          scrollableTarget={window}
+
+          // loader={<Spinner />}
+        >
+          <div className="container">
+            <div className="row h-100">
+              {this.state.articles.map((element,index) => {
+                const count = this.state.count + 1 + index
+                return (
+                  <div className="col-md-4" key={count}>
+                    {element.url &&
+                      <NewsItem element={element} />}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </InfiniteScroll>
+        {/* prev and next buttons */}
+      </>
+    );
+  }
+}
+
+
+ // goToPrevPage = async () => {
+  //   // try {
+  //   //   let url = `https://newsapi.org/v2/top-headlines?&from=2023-12-30&to=2023-12-30&sortBy=popularity&category=${this.props.category}&country=${this.props.country}&apiKey=${this.props.api}&pageSize=${this.state.pageSize}&page=${this.state.page}`;
+  //   //   this.setState({ loader: true });
+  //   //   let data = await fetch(url);
+  //   //   let jsonData = await data.json();
+  //   //   if (jsonData.status === "ok") {
+  //   //     this.setState({
+  //   //       articles: jsonData.articles,
+  //   //       page: this.state.page - 1,
+  //   //     });
+  //   //     this.setState({ loader: false });
+  //   //   } else {
+  //   //     return <div>Error: 404 , Page not found!</div>;
+  //   //   }
+  //   // } catch (error) {
+  //   //   console.log("something went wrong: no prev page" + error);
+  //   // }
+  //   // *********************************** removed redundency from above code
+  //   this.setState({ page: this.state.page - 1 });
+  //   this.updateNews();
+// };
+  
+// goToNextPage = async () => {
+//   // if (!(this.state.page + 1 > Math.ceil(this.state.totalResults) / 21)) {
+//   //   try {
+//   //     let url = `https://newsapi.org/v2/top-headlines?&from=2023-12-30&to=2023-12-30&sortBy=popularity&category=${this.props.category}&country=${this.props.country}&apiKey=${this.props.api}&pageSize=${this.state.pageSize}&page=${this.state.page}`;
+//   //     this.setState({ loader: true });
+//   //     let data = await fetch(url);
+//   //     let jsonData = await data.json();
+//   //     if (jsonData.status === "ok") {
+//   //       this.setState({
+//   //         articles: jsonData.articles,
+//   //         page: this.state.page + 1,
+//   //       });
+//   //       this.setState({ loader: false });
+//   //     } else {
+//   //       return <div>Error: 404 , Page not found!</div>;
+//   //     }
+//   //   } catch (error) {
+//   //     console.log("something went wrong: " + error);
+//   //   }
+//   // }
+//   // *********************************** removed redundency from above code
+//   this.setState({ page: this.state.page + 1 });
+//   this.updateNews();
+// };
+
+ 
+   /* <div className="container d-flex justify-content-between">
           <div
             disabled={this.state.page <= 1}
             className="btn btn-dark"
@@ -291,8 +371,4 @@ export default class News extends Component {
             {" "}
             Next &rarr;
           </div>
-        </div>
-      </div>
-    );
-  }
-}
+        </div> */

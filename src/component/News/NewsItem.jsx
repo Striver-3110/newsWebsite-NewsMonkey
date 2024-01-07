@@ -18,13 +18,41 @@ export default class NewsItem extends Component {
       const { element } = this.props;
 
     return (
-      <Card sx={{ maxWidth: '100vw'}} className="my-3">
+      <Card
+        sx={{
+          height: "95%",
+          display: "flex",
+          flexDirection: "column",
+          maxWidth: "100vw",
+          // justifyContent:'space-between'
+        }}
+        className="my-3 card-with-hover "
+      >
+        {element.source.name && (
+          <div className="d-flex justify-content-end ">
+            <span
+              className="badge badge-primary "
+              style={{
+                backgroundColor: "rgb(53 53 53)",
+                color: "white",
+                position: "absolute",
+              }} //,width:"100%", fontSize:'18px'
+            >
+              {element.source.name}
+            </span>
+          </div>
+        )}
+
         <CardHeader
-                title={<Typography>
-                    {element.title ? element.title.slice(0, 30) : "Top-News-Today"}
-                </Typography>}
+          title={
+            <Typography>
+              {element.title ? element.title.slice(0, 30) : "Top-News-Today"}
+            </Typography>
+          }
           subheader={
-            element.publishedAt ? element.publishedAt : new Date().getFullYear()
+            new Date(element.publishedAt).toGMTString()
+              ? new Date(element.publishedAt).toGMTString()
+              : new Date().getFullYear()
           }
         />
         <CardMedia
@@ -43,6 +71,9 @@ export default class NewsItem extends Component {
               : "click on the Read More button to know more"}
             ...
           </Typography>
+          <div className="card-footer d-flex bg-transparent border-success justify-content-end">
+            <em>{`~ ${element.author ? element.author : "Unknown"}`}</em>
+          </div>
         </CardContent>
         <CardActions disableSpacing className="d-flex justify-content-between">
           <a
@@ -55,7 +86,9 @@ export default class NewsItem extends Component {
             rel="noreferrer"
             style={{ underline: "none" }}
           >
-            <div className="btn btn-primary ">Read More...</div>
+            <div className="btn btn-primary " style={{ marginTop: "auto",cursor:'pointer' }}>
+              Read More...
+            </div>
           </a>
 
           <IconButton aria-label="share">

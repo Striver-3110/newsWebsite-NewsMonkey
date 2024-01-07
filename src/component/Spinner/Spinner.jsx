@@ -5,6 +5,7 @@ export default class Spinner extends Component {
     return (
       <div id="loading-bar-spinner" className="spinner">
         <div className="spinner-icon"></div>
+        {/* <img src="spinner.gif" alt="spinner" /> */}
       </div>
     );
   }
